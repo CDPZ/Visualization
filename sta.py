@@ -213,18 +213,15 @@ def visualization(statistics):
         plt.clf()
 
 def get_split_sta(statistics_):
-    storage_ = list()
+
     average = list()
     for sta in statistics_:
-        index = exist(storage_, sta[0][0])
-    if index != -1:
-        storage_[index].append(sta[1])
-    else:
-        storage_.append([sta[0][0]])
-        index = exist(storage_, sta[0][0])
-        storage_[index].append(sta[1])
+        index = exist(average, sta[0][0])
+        if index == -1:
+            average.append([sta[0][0]])
+        average[index].append(sta[1])
 
-    return storage_
+    return average
 
 def get_level(name, storage_):
     for stor in storage_:
