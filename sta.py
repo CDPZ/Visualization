@@ -20,11 +20,12 @@ path___ = u"D:/Users/Document/Tencent Files/279871734/FileRecv/实习数据/sepa
 path_ = u"D:/Users/Document/Tencent Files/279871734/FileRecv/实习数据/宿舍_split_inters/"
 path__ = u"D:/Users/Document/Tencent Files/279871734/FileRecv/实习数据/"
 path_pic = u"D:/Users/Document/Tencent Files/279871734/FileRecv/实习数据/STA_PIC/"
+path_shp_v1 = u"D:/Users/Document/Tencent Files/279871734/FileRecv/实习数据/STA.shp"
 Category = ["文", "教", "体", "卫", "食"]
 Dep = {u'Information':"信", u'Elder':"老斋舍", u'Pfirsich':"工", u'Duftbluete':"桂", u'Eichel':"梅", u'Ahorn':"枫", u'See':"湖滨"}
 legends = ["20", "50", "80", "100", "150", "300", "400", "500"]
 color = ["#2c3e50", "#f1c40f", "#8e44ad", "#e67e22", "#1abc9c", "#f39c12", "#3498db", "#c0392b"]
-
+sta_Dep = {u'Information':['17','20'], u'Elder':['1','1'], u'Pfirsich':['8','12'], u'Duftbluete':['9','9'], u'Eichel':['6','8'], u'Ahorn':['11','13'], u'See':['13','13']}
 
 
 
@@ -132,7 +133,30 @@ def bubble_sort(array):
                 array[j], array[j+1] = array[j+1], array[j]
     return array
 
-
+def sta_category():
+    Kultur = 0
+    Ausbildung = 0
+    Leibeserziehung = 0
+    Hygiene = 0
+    Essen = 0
+    statistic = list()
+    statistics = list()
+    path = path_shp_v1
+    cursor = arcpy.UpdateCursor(path)
+    for row in cursor:
+        if row.Class == 0:
+            continue
+        elif row.Class == 1:
+            Kultur += 1
+        elif row.Class == 2:
+            Ausbildung += 1
+        elif row.Class == 3:
+            Leibeserziehung += 1
+        elif row.Class == 4:
+            Hygiene += 1
+        elif row.Class == 5:
+            Essen += 1
+    print(Kultur, Ausbildung, Leibeserziehung, Hygiene, Essen)
 
 def exist(stor, name):
     count = 0
@@ -213,7 +237,6 @@ def visualization(statistics):
         plt.clf()
 
 def get_split_sta(statistics_):
-
     average = list()
     for sta in statistics_:
         index = exist(average, sta[0][0])
@@ -239,6 +262,14 @@ def set_ylim_by_category(i):
         plt.ylim(0,6)
     elif i == 4:
         plt.ylim(0,4)
+
+def sort_(array):
+    for i in range(1, len(array)):
+        for j in range(0, len(array)-i):
+            if int(array[j][0]) > int(array[j+1][0]):
+                array[j], array[j+1] = array[j+1], array[j]
+    return array
+
 def visualization_(statistics, statistics_):
     plt.rcParams['xtick.direction'] = 'in'
 
@@ -281,7 +312,9 @@ def visualization_(statistics, statistics_):
     for dep in depart:
         name = get_part(dep[0][0])
         whole_level = get_level(name, storage_)
-        
+        num = sta_Dep[name][1] # use a truer sta
+        whole_level = [ [row[0]]+[ float(ro)/float(num) for ro in row[1:]] for row in whole_level[1:]]
+        whole_level = sort_(whole_level)
         for i in range(5):
             num = whole_level[0]
             draw = [[row[0], row[1][i+1], row[2][i+1], row[3][i+1], row[4][i+1], row[5][i+1], row[6][i+1], row[7][i+1], row[8][i+1]] for row in dep]
@@ -289,38 +322,41 @@ def visualization_(statistics, statistics_):
 
             X = [m+1 for m in range(len(draw))]
             X_name = [insert(row[0]) for row in draw]
+            X_ = [0] + X
             for j in range(8):
                 #temp, = plt.plot(X, [row[j+1] for row in draw], color = color[j])
                 spc_2spc_dep = [int(row[j+1]) for row in draw]
-                temp = plt.bar(X, spc_2spc_dep, color = color[j])
+                temp = plt.bar(X, spc_2spc_dep, color = color[j],align='center')
+                plt.plot(X_, [whole_level[j][i+1] for row in X_], linestyle = 'dashed', color = 'k')
                 line.append(temp)
+                plt.text(0, whole_level[j][i+1], r'%4.4s' %whole_level[j][i+1])
                 plt.legend(handles=line,
-                        labels=legends,
-                        #bbox_to_anchor=(1,1),#图例边界框起始位置
-                        loc="upper right",#图例的位置
-                        #ncol=1,#列数
-                        #mode="None",#当值设置为“expend”时，图例会水平扩展至整个坐标轴区域
-                        #borderaxespad=0,#坐标轴和图例边界之间的间距
-                        title="缓冲区半径",#图例标题
-                        shadow=True,#是否为线框添加阴影
-                        fancybox=True,#线框圆角处理参数
-                        fontsize=8
-                        )
+                    labels=legends,
+                    #bbox_to_anchor=(1,1),#图例边界框起始位置
+                    loc="upper right",#图例的位置
+                    #ncol=1,#列数
+                    #mode="None",#当值设置为“expend”时，图例会水平扩展至整个坐标轴区域
+                    #borderaxespad=0,#坐标轴和图例边界之间的间距
+                    # title="缓冲区半径",#图例标题
+                    shadow=True,#是否为线框添加阴影
+                    fancybox=True,#线框圆角处理参数
+                    fontsize=7
+                    )
                 plt.xticks(range(1, len(X_name)), X_name , rotation = 'horizontal')
-
                 set_ylim_by_category(i)
-
                 plt.title(Dep[name] + '_' + Category[i])
                 plt.xlabel('宿舍名')
                 plt.ylabel('数量/个')
-                plt.savefig(path_pic + Dep[name] + '_' + legends[j] + '_' + str(Category[i]) + '.png', dpi=1000)
+                plt.savefig(path_pic + Dep[name] + '_' + legends[j] + '_' + str(Category[i]) + '.png', dpi=600)
 
                 plt.clf()
             #plt.show()
             #plt.clf()
+
 if __name__ == '__main__':
     sta = list()
     sta_ = list()
+    sta_category()
     sta = walk_path(u"dorm_sta_separate")
     sta_ = walk_path(u"dorm_sta_split")
     visualization_(sta, sta_)
